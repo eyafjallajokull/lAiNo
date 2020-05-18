@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod, abstractclassmethod
-from itertools import groupby
 import random, json
 
 class Papa(ABC):
@@ -22,7 +21,9 @@ class Papa(ABC):
                         else:
                             print(f'Длина символа "{letter}" не равна одного\n')
                             raise Exception()
-                    self._alph = [el.lower() for el, _ in groupby(alph["alph"])]
+                    alph = [let.lower() for let in alph["alph"]]
+                    alph = set(alph)
+                    self._alph = list(alph)
                 else:
                     print("Неверный формат: значение ключа 'alph' не является списком\n")
                     self._er = 1
@@ -168,28 +169,34 @@ class Replacement(Papa):
                 if self._enlist["Cipher method"] == "Replacement":
                     self._txt = self._txt.lower()
                     alphlist = [chr(let) for let in self._enlist["Alphabet ASCII"]]
+                    alphlist.append("\n")
+                    minier = 0
                     for letter in self._txt:
                         if letter in alphlist:
                             pass
                         else:
-                            print("\nВ данном открытом тексте присутствуют символы, которых нет в данном алфавите\nШифрование может работать некорректно")
-                            flag = True
-                            while flag:
-                                for i in range(3):
-                                    command = input("Желаете продолжить?(Y/N) ").upper()
-                                    if command == 'Y':
-                                        flag = False
-                                        break
-                                    elif command == 'N':
-                                        flag = False
-                                        self._er = 1
-                                        break
-                                    else:
-                                        print("Неправильно введена комманда\n")
-                                    if i == 2:
-                                        print("Слишком много ошибок. До свидания")
-                                        flag = False
-                                        self._er = 1
+                            print(f'\nСимвол "{letter}" данного открытого текста отсутствует в данном алфавите\nШифрование может работать некорректно')
+                            minier = 1
+                    if minier == 1:
+                        flag = True
+                        while flag:
+                            for i in range(3):
+                                command = input("Желаете продолжить?(Y/N) ").upper()
+                                if command == 'Y':
+                                    flag = False
+                                    break
+                                elif command == 'N':
+                                    flag = False
+                                    self._er = 1
+                                    break
+                                else:
+                                    print("Неправильно введена комманда\n")
+                                if i == 2:
+                                    print("Слишком много ошибок. До свидания")
+                                    flag = False
+                                    self._er = 1
+                    else:
+                        pass
                     if self._er == 0:
                         kdict = {letter: enletter for letter, enletter in zip(self._enlist["Alphabet ASCII"], self._enlist["Key ASCII"])}
                         defdict = {"Cipher method" : "Replacement", "Ciphertext" : self._txt.translate(kdict)}
@@ -249,21 +256,21 @@ class Transposition(Papa):
             if self._er == 0:
                 if self._enlist["Cipher method"] == "Transposition":
                     if len(self._enlist["Key"]) > len(self._txt):
-                        print("Длина данного блока перестановки больше длины текста\nСоздайте новый ключ или выберите корректный")
-                        print("Возврат в Главное меню\n")
+                        txt = self._txt.ljust(len(self._enlist["Key"]), self._txt[random.randint(0, len(self._txt))])
+                        n = len(self._enlist["Key"])
+                    elif len(self._txt) % len(self._enlist["Key"]) != 0:
+                        n = len(self._enlist["Key"]) - len(self._txt) % len(self._enlist["Key"]) + len(self._txt)
+                        txt = self._txt.ljust(n, self._txt[random.randint(0, len(self._txt))])
                     else:
-                        if len(self._txt) % len(self._enlist["Key"]) != 0:
-                            n = len(self._enlist["Key"]) - len(self._txt) % len(self._enlist["Key"]) + len(self._txt)
-                            txt = self._txt.ljust(n, self._txt[random.randint(0, len(self._txt))])
-                        else:
-                            pass
-                        text = list(txt)
-                        for i in range(0, len(text), len(self._enlist["Key"])):
-                            string = [text[i+j] for j in range(len(self._enlist["Key"]))]
-                            for j in range(len(self._enlist["Key"])):
-                                text[i + j] = string[self._enlist["Key"][j]]
-                        defdict = {"Cipher method" : "Transposition", "Ciphertext" : "".join(text), "Difference": n - len(self._txt)}
-                        self.ENCODE("", defdict)
+                        txt = self._txt
+                        n = len(txt)
+                    text = list(txt)
+                    for i in range(0, len(text), len(self._enlist["Key"])):
+                        string = [text[i+j] for j in range(len(self._enlist["Key"]))]
+                        for j in range(len(self._enlist["Key"])):
+                            text[i + j] = string[self._enlist["Key"][j]]
+                    defdict = {"Cipher method" : "Transposition", "Ciphertext" : "".join(text), "Difference": n - len(self._txt)}
+                    self.ENCODE("", defdict)
                 else:
                     print("Ключ не соотвествует данному методу шифрования\nВозврат в Главное меню\n")
             else:
@@ -284,7 +291,10 @@ class Transposition(Papa):
                             for j in range(len(self._enlist["Key"])):
                                 etxt[i + self._enlist["Key"][j]] = string[j]
                         dtext = "".join(etxt)
-                        dtext = dtext[ : - self._etxt["Difference"]]
+                        if self._etxt["Difference"] <= 0:
+                            pass
+                        else:
+                            dtext = dtext[ : - self._etxt["Difference"]]
                         self.TXT("", dtext)
                     else:
                         print("Ключ не соотвествует данному методу шифрования\nВозврат в Главное меню\n")
@@ -311,6 +321,10 @@ class Gamming(Papa):
                 except ValueError:
                     print("\nВы ввели не целое число")
             enkey = [random.randint(0, len(self._alph)) for i in range(siz)]
+            if "\n" in self._alph:
+                pass
+            else:
+                self._alph.append("\n")
             hdict = {"Cipher method" : "Gamming", "Gamma": enkey, "Alphabet": self._alph}
             self.KEY("", hdict)
         else:
@@ -322,34 +336,34 @@ class Gamming(Papa):
             self.KEY("r", "")
             if self._er == 0:
                 if self._enlist["Cipher method"] == "Gamming":
-                    self._txt = self._txt.lower()
-                    for letter in self._txt:
+                    txt = self._txt.lower()
+                    for letter in txt:
                         if letter in self._enlist["Alphabet"]:
                             pass
                         else:
-                            print("\nВ данном открытом тексте присутствуют символы, которых нет в данном алфавите. Пожалуйста, создайте ключ с помощью более полного алфавита")
+                            print(f'\nСимвол "{letter}" данного открытого текста отсутствует в данном алфавите')
                             self._er = 1
-                            break
                     if self._er == 0:
                         if len(self._enlist["Gamma"]) > len(self._txt):
-                            print("Длина данной гаммы больше длины текста\nСоздайте новый ключ или выберите корректный")
-                            print("Возврат в Главное меню\n")
+                            txt = txt.ljust(len(self._enlist["Gamma"]), random.choice(self._enlist["Alphabet"]))
+                            n = len(self._enlist["Gamma"])
+                        elif len(self._txt) % len(self._enlist["Gamma"]) != 0:
+                            n = len(self._enlist["Gamma"]) - len(self._txt) % len(self._enlist["Gamma"]) + len(self._txt)
+                            txt = txt.ljust(n, random.choice(self._enlist["Alphabet"]))
                         else:
-                            if len(self._txt) % len(self._enlist["Gamma"]) != 0:
-                                n = len(self._enlist["Gamma"]) - len(self._txt) % len(self._enlist["Gamma"]) + len(self._txt)
-                                txt = self._txt.ljust(n, random.choice(self._enlist["Alphabet"]))
-                            else:
-                                pass
-                            text = list(txt)
-                            kdict = {self._enlist["Alphabet"][i]: i for i in range(len(self._enlist["Alphabet"]))}
-                            revkdict = {key: value for value, key in kdict.items()}
-                            for i in range(0, len(text), len(self._enlist["Gamma"])):
-                                string = [(kdict[text[i + j]] + self._enlist["Gamma"][j]) % len(self._enlist["Alphabet"]) for j in range(len(self._enlist["Gamma"]))]
-                                for j in range(len(self._enlist["Gamma"])):
-                                    text[i + j] = revkdict[string[j]]
-                            defdict = {"Cipher method" : "Gamming", "Ciphertext" : "".join(text), "Difference": n - len(self._txt)}
-                            self.ENCODE("", defdict)
+                            n = len(txt)
+                        text = list(txt)
+                        kdict = {self._enlist["Alphabet"][i]: i for i in range(len(self._enlist["Alphabet"]))}
+                        revkdict = {key: value for value, key in kdict.items()}
+                        for i in range(0, len(text), len(self._enlist["Gamma"])):
+                            string = [(kdict[text[i + j]] + self._enlist["Gamma"][j]) % len(self._enlist["Alphabet"]) for j in range(len(self._enlist["Gamma"]))]
+                            for j in range(len(self._enlist["Gamma"])):
+                                text[i + j] = revkdict[string[j]]
+                        defdict = {"Cipher method" : "Gamming", "Ciphertext" : "".join(text), "Difference": n - len(self._txt)}
+                        print(defdict)
+                        self.ENCODE("", defdict)
                     else:
+                        print("Пожалуйста, создайте ключ с помощью более полного алфавита")
                         print("Возврат в Главное меню\n")
                 else:
                     print("Ключ не соотвествует данному методу шифрования\nВозврат в Главное меню\n")
@@ -373,7 +387,10 @@ class Gamming(Papa):
                             for j in range(len(self._enlist["Gamma"])):
                                 etxt[i + j] = revkdict[string[j]]
                         dtext = "".join(etxt)
-                        dtext = dtext[ : - self._etxt["Difference"] + 2]
+                        if self._etxt["Difference"] <= 0:
+                            pass
+                        else:
+                            dtext = dtext[ : - self._etxt["Difference"]]
                         self.TXT("", dtext)
                     else:
                         print("Ключ не соотвествует данному методу шифрования\nВозврат в Главное меню\n")
