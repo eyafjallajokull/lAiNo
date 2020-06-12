@@ -30,7 +30,7 @@ class Data:
         else:
             with open("servdata.encode", "w", encoding="UTF-8") as sd:
                 lap = "Logins and Passwords"
-                dtdict: typing.Dict[str, typing.Dict[bytes, bytes]] = {lap : {}}
+                dtdict: typing.Dict[str, typing.Dict[bytes, bytes]] = {lap: {}}
                 self.lap = dtdict
                 sd.write(str(dtdict))
         self.nwckey = b""
@@ -114,24 +114,20 @@ class Data:
             if i == 2:
                 print("Слишком много ошибок. Возврат в главное меню")
 
-    def Enter(self) -> None:
-        self.entrval = 0
-        self.log = input("Введите логин: ")
-        tpas = input("Введите пароль: ").encode(encoding="UTF-8")
+    def Enter(self, log: str, pas: str) -> bool:
+        self.log = log
+        tpas = pas.encode(encoding="UTF-8")
         self.pas = self.sec.Hashing(tpas)
         with open("servdata.encode", "r", encoding="UTF-8") as sd:
             lap = dict(ast.literal_eval(sd.read()))
         spis = lap["Logins and Passwords"]
         if self.log in spis.keys() and self.pas in spis[self.log]:
-            print("Вы вошли в систему")
-            self.entrval = 1
+            return True
         else:
-            print("Неправильно введен логин и/или пароль")
-            print("Возврат в главное меню")
+            return False
 
-    def Deletion(self) -> None:
-        self.n = 0
-        tpas = input("Введите пароль: ").encode(encoding="UTF-8")
+    def Deletion(self, pas: str) -> bool:
+        tpas = pas.encode(encoding="UTF-8")
         delpas = self.sec.Hashing(tpas)
         if delpas == self.pas:
             with open("servdata.encode", "w", encoding="UTF-8") as sd:
@@ -139,75 +135,42 @@ class Data:
                 logdata.pop(self.log)
                 sd.write(str(self.lap))
             shutil.rmtree(self.log)
-            self.n = 1
+            return True
         else:
-            print('Неверный пароль. Возврат в главное меню')
+            return False
 
     def Exit(self) -> None:
-        self.n = 0
-        for i in range(3):
-            choice = input("Вы уверены?(Y/N) ").upper()
-            if choice == 'N':
-                self.n = 1
-                break
-            elif choice == 'Y':
-                self.log = ""
-                self.pas = b""
-                print("Вы успешно вышли\n")
-                break
-            else:
-                print("Неправильно введена комадна")
-            if i == 2:
-                print("Допущено слишком много ошибок")
-                self.n = 1
+        self.log = ""
+        self.pas = b""
 
     def ChCiphKey(self) -> None:
-        self.success = 0
         er = 0
-        miner = 0
-        for i in range(3):
-            com = input("Вы уверены?(Y/N) ").upper()
-            if com == "Y":
-                with open("servdata.encode", "r", encoding="UTF-8") as sd:
-                    servd = dict(ast.literal_eval(sd.read()))
-                self.nwckey = self.sec.GenUSKey(self.sec.GenSKey())
-                os.chdir(self.log)
-                for fl in os.listdir(os.getcwd()):
-                    try:
-                        with open(fl, "r", encoding="UTF-8") as nt:
-                            tx = dict(ast.literal_eval(nt.read()))
-                        tx["Ciphertext"][0]
-                    except SyntaxError:
-                        print("Этот файл не был создан в этой программе")
-                        er = 1
-                    except IndexError:
-                        miner = 1
-                    if er == 0:
-                        if miner == 0:
-                            with open(fl, "w", encoding="UTF-8") as nt:
-                                a = tx["Ciphertext"]
-                                b = servd["Logins and Passwords"][self.log][1]
-                                dtext = self.sec.Decrypt(a, b)
-                                d = self.sec.Encrypt(dtext, self.nwckey)
-                                tx.update({"Ciphertext": d})
-                                nt.write(str(tx))
-                        else:
-                            pass
-                    else:
-                        pass
-                    er = 0
-                    miner = 0
-                os.chdir("..")
-                with open("servdata.encode", "w", encoding="UTF-8") as sd:
-                    logdata = self.lap["Logins and Passwords"]
-                    logdata[self.log][1] = self.nwckey
-                    sd.write(str(self.lap))
-                self.success = 1
-                print("Шифр-ключ успешно изменён")
-                break
-            elif com == "N":
-                break
+        with open("servdata.encode", "r", encoding="UTF-8") as sd:
+            servd = dict(ast.literal_eval(sd.read()))
+        self.nwckey = self.sec.GenUSKey(self.sec.GenSKey())
+        os.chdir(self.log)
+        for fl in os.listdir(os.getcwd()):
+            try:
+                with open(fl, "r", encoding="UTF-8") as nt:
+                    tx = dict(ast.literal_eval(nt.read()))
+                tx["Ciphertext"][0]
+            except SyntaxError:
+                print(f"{fl} не был создан в этой программе")
+                er = 1
+            except IndexError:
+                er = 1
+            if er == 0:
+                with open(fl, "w", encoding="UTF-8") as nt:
+                    a = tx["Ciphertext"]
+                    b = servd["Logins and Passwords"][self.log][1]
+                    dtext = self.sec.Decrypt(a, b)
+                    d = self.sec.Encrypt(dtext, self.nwckey)
+                    tx.update({"Ciphertext": d})
+                    nt.write(str(tx))
             else:
-                print("Неправильно введена комадна")
-            if i == 2:
-                print("Допущено слишком много ошибок")
+                pass
+        os.chdir("..")
+        with open("servdata.encode", "w", encoding="UTF-8") as sd:
+            logdata = self.lap["Logins and Passwords"]
+            logdata[self.log][1] = self.nwckey
+            sd.write(str(self.lap))
