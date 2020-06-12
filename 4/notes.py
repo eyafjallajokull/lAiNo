@@ -1,7 +1,8 @@
 import os
 import ast
-import security
+import typing
 import db
+import security
 
 
 class Notes:
@@ -13,12 +14,11 @@ class Notes:
             servd = dict(ast.literal_eval(sd.read()))
         self.mrkey = servd["Logins and Passwords"][self.log][1]
 
-    def Creation(self) -> None:
+    def Creation(self, ntname: str) -> bool:
         os.chdir(self.log)
         ersymlist = ["\\", "|", "/", "\"", "\'", "<", ">", ":", "*", ";"]
         for i in range(3):
             er = 0
-            ntname = input("Введите название заметки: ")
             if ntname[-4:] != ".txt":
                 ntname = ntname + ".txt"
             else:
@@ -42,18 +42,20 @@ class Notes:
             try:
                 with open(ntname, "x", encoding="UTF-8") as nt:
                     nt.write(str({"Ciphertext": ""}))
-                    print("Вы успешно создали заметку")
+                    os.chdir("..")
+                    return True
             except FileExistsError:
                 print("Заметка с таким именем уже существует")
+                os.chdir("..")
+                return False
         else:
-            pass
-        os.chdir("..")
+            os.chdir("..")
+            return False
 
-    def Editing(self) -> None:
+    def Editing(self, ntname: str) -> None:
         os.chdir(self.log)
         er = 0
         miner = 0
-        ntname = input("Введите название заметки: ")
         if ntname[-4:] != ".txt":
             ntname = ntname + ".txt"
         else:
@@ -89,9 +91,8 @@ class Notes:
             print("Такой заметки не существует")
         os.chdir("..")
 
-    def Deletion(self) -> None:
+    def Deletion(self, ntname: str) -> None:
         os.chdir(self.log)
-        ntname = input("Введите название заметки: ")
         if ntname[-4:] != '.txt':
             ntname = ntname + '.txt'
         else:
@@ -105,33 +106,20 @@ class Notes:
 
     def DelAll(self) -> None:
         os.chdir(self.log)
-        self.n = 0
-        for i in range(3):
-            choice = input("Вы уверены?(Y/N): ").upper()
-            if choice == 'N':
-                self.n = 1
-                break
-            elif choice == 'Y':
-                for j in os.listdir("."):
-                    os.remove(j)
-                print('Заметки удалены\n')
-                break
-            else:
-                print("Неправильно введена команда")
-            if i == 2:
-                print("Допущено слишком много ошибок")
+        for j in os.listdir("."):
+            os.remove(j)
         os.chdir("..")
 
-    def NotesList(self) -> None:
+    def NotesList(self) -> typing.List[str]:
         os.chdir(self.log)
-        print("Ваши заметки: ", os.listdir("."), "\n")
+        drl: typing.List[str] = os.listdir(".")
         os.chdir("..")
+        return drl
 
-    def NoteReading(self) -> None:
+    def NoteReading(self, ntname: str) -> None:
         er = 0
         os.chdir(self.log)
         miner = 0
-        ntname = input("Введите название заметки: ")
         if ntname[-4:] != '.txt':
             ntname = ntname + '.txt'
         else:
