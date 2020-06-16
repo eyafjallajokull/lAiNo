@@ -17,27 +17,19 @@ class Notes:
     def Creation(self, ntname: str) -> bool:
         os.chdir(self.log)
         ersymlist = ["\\", "|", "/", "\"", "\'", "<", ">", ":", "*", ";"]
-        for i in range(3):
-            er = 0
-            if ntname[-4:] != ".txt":
-                ntname = ntname + ".txt"
-            else:
-                pass
-            for let in ntname[:-4]:
-                if let in ersymlist:
-                    print("В названии не должны присутствовать символы:")
-                    print("\\, |, /, \", \', <, >, ;, :, *")
-                    er = 1
-                    break
-                else:
-                    pass
-            if er == 0:
+        er = 0
+        if ntname[-4:] != ".txt":
+            ntname = ntname + ".txt"
+        else:
+            pass
+        for let in ntname[:-4]:
+            if let in ersymlist:
+                print("В названии не должны присутствовать символы:")
+                print("\\, |, /, \", \', <, >, ;, :, *")
+                er = 1
                 break
             else:
                 pass
-            if i == 2:
-                print("Слишком много ошибок. Возврат в главное меню")
-                er = 1
         if er == 0:
             try:
                 with open(ntname, "x", encoding="UTF-8") as nt:
